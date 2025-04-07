@@ -29,6 +29,8 @@ def reta(
 
 
 def grafico(df: pd.DataFrame, dados_reta: list = [10.6198, 1,]) -> None:
+    st.set_page_config(layout="wide")
+
     st.sidebar.markdown(
         "<h3>Selecione Valores da Equação</h3>",
         unsafe_allow_html=True
@@ -63,68 +65,80 @@ def grafico(df: pd.DataFrame, dados_reta: list = [10.6198, 1,]) -> None:
     
     if use_linha:
         df['cals_curva'] = df['gramas'].apply(reta, args=dados_reta)
+        st.html("<h1>Calorias = Interceptor + Coeficiente Angular * Peso + Variação</h1>")
     
-    fig = plt.figure(figsize=(10, 10))
-    x = 'gramas'
-    y = 'cals'
-    sns.scatterplot(
-        x=x,
-        y=y,
-        legend=False,
-        s=50,
-        data=df
-    )
-    if use_linha:
-        plt.plot(df['gramas'], df['cals_curva'], c='r', label='Manual')
+    col1, col2 = st.columns([.7,.3])
+
+    with col1:
+        fig = plt.figure(figsize=(10, 10))
+        x = 'gramas'
+        y = 'cals'
+        sns.scatterplot(
+            x=x,
+            y=y,
+            legend=False,
+            s=50,
+            data=df
+        )
+        if use_linha:
+            plt.plot(df['gramas'], df['cals_curva'], c='r', label='Manual')
+        
+        x_obs = df['gramas']
+
+        if use_reg:
+            y_pred = reg.predict(x_obs)
+            plt.plot(x_obs, y_pred, 'g', label='Regressão')
+            st.sidebar.write(reg.summary())
+
+        plt.legend(loc="upper left")
+
+        plt.xlabel(x.title())
+        plt.ylabel(y.title())
+
+        if use_erro:
+            for n in range(10):
+                index = df['gramas'].sample(1).index[0]
+                x = df['gramas'][index]
+                y = df['cals_curva'][index]
+                d = df['cals'][index] - y
+
+                plt.arrow(
+                    x,
+                    y,
+                    0,
+                    d,
+                    head_width=.1,
+                    head_length=.50,
+                    length_includes_head=True,
+                    color='grey',
+                )
+
+        rmse_reg = 0
+        rmse_manual = 0
+        if use_linha:
+            rmse_manual = mean_squared_error(df['cals_curva'], df['cals'])
+        if use_reg:
+            rmse_reg = mean_squared_error(y_pred, df['cals'])
+
+        plt.title(f"Distribuição de calorias por grama de Strogonof", loc='left')
+
+        plt.xlim([
+            df.gramas.min()-1,
+            df.gramas.max()+1
+        ])
+        plt.ylim([
+            df.cals.min()-1,
+            df.cals.max()+1
+        ])
+        st.pyplot(fig)
     
-    x_obs = df['gramas']
-
-    if use_reg:
-        y_pred = reg.predict(x_obs)
-        plt.plot(x_obs, y_pred, 'g', label='Regressão')
-        st.sidebar.write(reg.summary())
-
-    plt.legend(loc="upper left")
-
-    plt.xlabel(x.title())
-    plt.ylabel(y.title())
-
-    if use_erro:
-        for n in range(10):
-            index = df['gramas'].sample(1).index[0]
-            x = df['gramas'][index]
-            y = df['cals_curva'][index]
-            d = df['cals'][index] - y
-
-            plt.arrow(
-                x,
-                y,
-                0,
-                d,
-                head_width=.1,
-                head_length=.50,
-                length_includes_head=True,
-                color='grey',
-            )
-
-    rmse_reg = 0
-    rmse_manual = 0
-    if use_linha:
-        rmse_manual = mean_squared_error(df['cals_curva'], df['cals'])
-    if use_reg:
-        rmse_reg = mean_squared_error(y_pred, df['cals'])
-
-    plt.title(f"RMSE manual:    {rmse_manual:,.2f}\nRMSE regressão: {rmse_reg:,.2f}", loc='left')
-
-    plt.xlim([
-        df.gramas.min()-1,
-        df.gramas.max()+1
-    ])
-    plt.ylim([
-        df.cals.min()-1,
-        df.cals.max()+1
-    ])
-    st.pyplot(fig)
+    with col2:
+        if use_linha:
+            st.markdown(f"## y = {dados_reta[0]} + x*{dados_reta[1]}")
+        
+        if use_reg:
+            st.markdown(f"## RMSE manual:    {rmse_manual:,.2f}")
+            st.markdown(f"## RMSE regressão: {rmse_reg:,.2f}")
 
 if __name__ == '__main__':
 
