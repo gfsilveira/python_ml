@@ -5,17 +5,27 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 import statsmodels.formula.api as smf
 import streamlit as st
+import os
 
 def gera_dados() -> pd.DataFrame:
-    mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
-    np.random.seed(25)
-    gramas = np.random.normal(mu, sigma, n)
-    cals = gramas + np.random.normal(mu, sigma+.3, n)
-    df = pd.DataFrame(data = {
-                                'gramas': gramas,
-                                'cals': cals
-                            }
-                    )
+    try:
+        mensagem = "carregado."
+        link = "./aula/streamlit/data/df2.csv"
+        df = pd.read_csv(link, sep=';')
+    except:
+        mensagem = "gerado."
+        mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
+        np.random.seed(25)
+        gramas = np.random.normal(mu, sigma, n)
+        cals = gramas + np.random.normal(mu, sigma+.3, n)
+        df = pd.DataFrame(data = {
+                                    'gramas': gramas,
+                                    'cals': cals
+                                }
+                        )
+    finally:
+        st.sidebar.markdown(f"##### Banco de dados {mensagem}")
+
     return df
 
 def reta(
@@ -28,8 +38,7 @@ def reta(
     return y
 
 
-def grafico(df: pd.DataFrame, dados_reta: list = [10.6198, 1,]) -> None:
-    st.set_page_config(layout="wide")
+def grafico(df: pd.DataFrame) -> None:
 
     st.sidebar.markdown(
         "<h3>Selecione Valores da Equação</h3>",
@@ -37,31 +46,38 @@ def grafico(df: pd.DataFrame, dados_reta: list = [10.6198, 1,]) -> None:
     )
 
     use_linha = st.sidebar.checkbox("Mostrar Linha")
+    use_erro = st.sidebar.checkbox("Mostrar Erro")
+    use_reg = st.sidebar.checkbox("Mostrar Regressão Linear")
+    reg = smf.ols('cals ~ gramas', data = df).fit()
+    
+    intercep = round(df['cals'].mean(), 2)
+    max_intercep = round(intercep + intercep*2, 2)
+    min_intercep = round(intercep - intercep*2, 2)
+    
+    coef = round(reg.params.gramas, 2)
+    max_coef = round(coef + coef*2, 2)
+    min_coef = 0.0
+
+    dados_reta = [intercep, coef,]
 
     if use_linha:
         intercep = st.sidebar.slider(
                                 label='Interceptor',
-                                min_value=7.0,
-                                max_value=20.0,
-                                value=20.0,
+                                min_value=min_intercep,
+                                max_value=max_intercep,
+                                value=intercep,
                                 step=0.01
                             )
 
         coef = st.sidebar.slider(
                                 label='Coeficiente',
-                                min_value=0.0,
-                                max_value=2.0,
+                                min_value=min_coef,
+                                max_value=max_coef,
                                 value=0.0,
                                 step=0.001
                             )
 
         dados_reta = [intercep, coef,]
-
-    use_erro = st.sidebar.checkbox("Mostrar Erro")
-    use_reg = st.sidebar.checkbox("Mostrar Regressão Linear")
-    
-    if use_reg:
-        reg = smf.ols('cals ~ gramas', data = df).fit()
     
     if use_linha:
         df['cals_curva'] = df['gramas'].apply(reta, args=dados_reta)
@@ -135,12 +151,13 @@ def grafico(df: pd.DataFrame, dados_reta: list = [10.6198, 1,]) -> None:
     with col2:
         if use_linha:
             st.markdown(f"## y = {dados_reta[0]} + x*{dados_reta[1]}")
+            st.markdown(f"## RMSE manual:    {rmse_manual:,.2f}")
         
         if use_reg:
-            st.markdown(f"## RMSE manual:    {rmse_manual:,.2f}")
             st.markdown(f"## RMSE regressão: {rmse_reg:,.2f}")
 
 if __name__ == '__main__':
 
+    st.set_page_config(layout="wide")
     df = gera_dados()
     grafico(df=df)
