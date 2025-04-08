@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 import statsmodels.formula.api as smf
 import streamlit as st
-import os
+# import os
 
 def gera_dados() -> pd.DataFrame:
-    st.write(os.listdir("./aula/streamlit/data/"))
+    # st.write(os.listdir("./aula/streamlit/data/"))
     try:
         mensagem = "carregado."
         link = "./aula/streamlit/data/df2.csv"
