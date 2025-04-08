@@ -4,29 +4,50 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 import statsmodels.formula.api as smf
+from scipy.stats.mstats import winsorize
 import streamlit as st
 # import os
 
-def gera_dados() -> pd.DataFrame:
-    # st.write(os.listdir("./aula/streamlit/data/"))
-    try:
-        mensagem = "carregado."
-        link = "./aula/streamlit/data/df2.csv"
-        df = pd.read_csv(link, sep=';')
-    except:
-        mensagem = "gerado."
-        mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
-        np.random.seed(25)
-        gramas = np.random.normal(mu, sigma, n)
-        cals = gramas + np.random.normal(mu, sigma+.3, n)
-        df = pd.DataFrame(data = {
-                                    'gramas': gramas,
-                                    'cals': cals
-                                }
-                        )
-    finally:
-        st.sidebar.markdown(f"##### Banco de dados {mensagem}")
+def gerador_de_dados() -> pd.DataFrame:
+    mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
+    np.random.seed(25)
+    gramas = np.random.normal(mu, sigma, n)
+    cals = gramas + np.random.normal(mu, sigma+.3, n)
+    df = pd.DataFrame(data = {
+                                'gramas': gramas,
+                                'cals': cals
+                            }
+                    )
+    return df
 
+def carregador_de_dados() -> pd.DataFrame:
+    link = "./aula/streamlit/data/df2.csv"
+    df = pd.read_csv(link, sep=';')
+    
+    max_gramas = df['gramas'].quantile(.75)
+    min_gramas = df['gramas'].quantile(.25)
+    df['gramas'] = df[(df['gramas'] > min_gramas) & (df['gramas'] <= max_gramas)]['gramas']
+    df['gramas'] = df['gramas'].fillna(df['gramas'].median())
+    
+    max_cals = df['cals'].quantile(.75)
+    min_cals = df['cals'].quantile(.25)
+    df['cals'] = df[(df['cals'] > min_cals) & (df['cals'] <= max_cals)]['cals']
+    df['cals'] = df['cals'].fillna(df['cals'].median())
+    return df
+
+def gera_dados(use_dados: bool) -> pd.DataFrame:
+    if use_dados:
+        df = gerador_de_dados()
+        mensagem = "gerado."
+    else:
+        try:
+            mensagem = "carregado."
+            df = carregador_de_dados()
+        except Exception as e:
+            st.write(e)
+
+    st.sidebar.markdown(f"##### Banco de dados {mensagem}")
+    
     return df
 
 def reta(
@@ -137,7 +158,7 @@ def grafico(df: pd.DataFrame) -> None:
         if use_reg:
             rmse_reg = mean_squared_error(y_pred, df['cals'])
 
-        plt.title(f"Distribuição de calorias por grama de Strogonof", loc='left')
+        plt.title(f"Distribuição de calorias por grama de Estrogonofe", loc='left')
 
         plt.xlim([
             df.gramas.min()-1,
@@ -160,5 +181,7 @@ def grafico(df: pd.DataFrame) -> None:
 if __name__ == '__main__':
 
     st.set_page_config(layout="wide")
-    df = gera_dados()
+    use_dados = st.sidebar.checkbox("Gerar dados")
+
+    df = gera_dados(use_dados=use_dados)
     grafico(df=df)
