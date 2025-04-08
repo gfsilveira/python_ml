@@ -10,6 +10,9 @@ from sklearn.metrics import mean_squared_error
 import statsmodels.formula.api as smf
 
 def gerador_de_dados() -> pd.DataFrame:
+    '''
+    Função que gera um conjunto de 100 dados
+    '''
     mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
     np.random.seed(25)
     gramas = np.random.normal(mu, sigma, n)
