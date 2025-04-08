@@ -1,12 +1,13 @@
+import streamlit as st
+
 import numpy as np
 import pandas as pd
+
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import mean_squared_error
 import statsmodels.formula.api as smf
-from scipy.stats.mstats import winsorize
-import streamlit as st
-# import os
 
 def gerador_de_dados() -> pd.DataFrame:
     mu, sigma, n = 10, 1, 100 # mean, standard deviation and number
