@@ -8,6 +8,7 @@ import streamlit as st
 import os
 
 def gera_dados() -> pd.DataFrame:
+    st.write(os.listdir())
     try:
         mensagem = "carregado."
         link = "./aula/streamlit/data/df2.csv"
