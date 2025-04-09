@@ -25,7 +25,7 @@ def gerador_de_dados() -> pd.DataFrame:
     return df
 
 def carregador_de_dados() -> pd.DataFrame:
-    link = "./aula/streamlit/data/df2.csv"
+    link = "./seminário/streamlit/data/df2.csv"
     df = pd.read_csv(link, sep=';')
     
     max_gramas = df['gramas'].quantile(.75)
