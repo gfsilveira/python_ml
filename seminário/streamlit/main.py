@@ -40,8 +40,8 @@ def carregador_de_dados() -> pd.DataFrame:
     return df
 
 def gera_dados(use_dados: bool) -> pd.DataFrame:
+    df = gerador_de_dados()
     if use_dados:
-        df = gerador_de_dados()
         mensagem = "gerado."
     else:
         try:
